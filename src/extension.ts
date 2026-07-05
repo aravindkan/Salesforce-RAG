@@ -1,0 +1,87 @@
+// The module 'vscode' contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in your code below
+import * as vscode from 'vscode';
+import { scanSalesforceProject } from './salesforceScanner';
+import { chunkApexDocuments } from './apexChunker';
+import { buildIndex, getIndex, searchIndex } from './ragIndex';
+import { extractKeywords } from "./questionParser";
+import { buildAnswer } from './answerBuilder';
+import { buildPrompt } from './promptBuilder';
+import { askLLM, getLLMProvider } from './llmClient';
+
+
+// This method is called when your extension is activated
+// Your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+
+	// Use the console to output diagnostic information (console.log) and errors (console.error)
+	// This line of code will only be executed once when your extension is activated
+	console.log('Congratulations, your extension "salesforce-rag-agent-v2" is now active!');
+
+	// The command has been defined in the package.json file
+	// Now provide the implementation of the command with registerCommand
+	// The commandId parameter must match the command field in package.json
+	const output = vscode.window.createOutputChannel('Salesforce RAG v2');
+	context.subscriptions.push(output);
+	const disposable = vscode.commands.registerCommand('salesforce-rag-agent-v2.helloWorld', async () => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		const docs = await scanSalesforceProject();
+		const chunks = chunkApexDocuments(docs);
+		buildIndex(chunks);
+		const question = await vscode.window.showInputBox({
+    		prompt: "Ask a Salesforce question"
+		});
+		if (!question) {
+    		return;
+		}
+		const keywords = extractKeywords(question);
+		const matches = searchIndex(keywords.join(" "), 5);
+		const answer = buildAnswer(question, matches);
+		const prompt = buildPrompt(question, matches);
+
+		output.clear();
+		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine('Thinking...');
+		output.show();
+		const response = await askLLM(prompt);
+		output.clear();
+		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine(`Provider: ${getLLMProvider()}`);
+		output.appendLine('');
+		output.appendLine('AI Answer:');
+		output.appendLine(response);
+		output.appendLine('');
+		output.appendLine('Sources:');
+		for (const match of matches) {
+			output.appendLine(`• ${match.name} (${match.chunkType}) - ${match.fileName}`);
+		}
+		if (matches.length > 0) {
+  			await openSource(matches[0]);
+		}
+		output.show();
+	});
+
+	context.subscriptions.push(disposable);
+}
+async function openSource(chunk: { filePath: string; content: string }) {
+  const document = await vscode.workspace.openTextDocument(chunk.filePath);
+  const editor = await vscode.window.showTextDocument(document);
+
+  const firstLine = chunk.content.split('\n')[0].trim();
+  const text = document.getText();
+  const offset = text.indexOf(firstLine);
+
+  if (offset >= 0) {
+    const position = document.positionAt(offset);
+    editor.selection = new vscode.Selection(position, position);
+    editor.revealRange(
+      new vscode.Range(position, position),
+      vscode.TextEditorRevealType.InCenter
+    );
+  }
+}
+// This method is called when your extension is deactivated
+export function deactivate() {}
