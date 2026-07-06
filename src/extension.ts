@@ -29,10 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// Display a message box to the user
 		let cacheStatus = '';
 		let chunks = loadIndexCache(context)?.chunks;
-		if (chunks) {
-			cacheStatus = `Loaded cached index with ${chunks.length} chunks.`;
-		} else {
-			cacheStatus = 'Built fresh index.';
+		if (!chunks) {
 			const docs = await scanSalesforceProject();
 			chunks = chunkApexDocuments(docs);
 			await saveIndexCache(context, chunks);
