@@ -61,7 +61,6 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine(`Question: ${question}`);
 		output.appendLine('');
 		output.appendLine(`Provider: ${getLLMProvider()}`);
-		output.appendLine(`Index: ${cacheStatus}`);
 		output.appendLine('');
 		output.appendLine('AI Answer:');
 		output.appendLine(response);
