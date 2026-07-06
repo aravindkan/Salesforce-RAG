@@ -8,6 +8,7 @@ import { extractKeywords } from "./questionParser";
 import { buildAnswer } from './answerBuilder';
 import { buildPrompt } from './promptBuilder';
 import { askLLM, getLLMProvider } from './llmClient';
+import { loadIndexCache, saveIndexCache } from './indexCache';
 
 
 // This method is called when your extension is activated
@@ -26,8 +27,18 @@ export function activate(context: vscode.ExtensionContext) {
 	const disposable = vscode.commands.registerCommand('salesforce-rag-agent-v2.helloWorld', async () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		const docs = await scanSalesforceProject();
-		const chunks = chunkApexDocuments(docs);
+		let cacheStatus = '';
+		let chunks = loadIndexCache(context)?.chunks;
+		if (chunks) {
+			cacheStatus = `Loaded cached index with ${chunks.length} chunks.`;
+		} else {
+			cacheStatus = 'Built fresh index.';
+			const docs = await scanSalesforceProject();
+			chunks = chunkApexDocuments(docs);
+			await saveIndexCache(context, chunks);
+		}
+
+
 		buildIndex(chunks);
 		const question = await vscode.window.showInputBox({
     		prompt: "Ask a Salesforce question"
@@ -50,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine(`Question: ${question}`);
 		output.appendLine('');
 		output.appendLine(`Provider: ${getLLMProvider()}`);
+		output.appendLine(`Index: ${cacheStatus}`);
 		output.appendLine('');
 		output.appendLine('AI Answer:');
 		output.appendLine(response);
