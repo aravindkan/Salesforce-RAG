@@ -1,10 +1,8 @@
 import OpenAI from 'openai';
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';
-console.log("OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);
 
 export async function createEmbedding(text: string): Promise<number[]> {
-  console.log("OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);  
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {

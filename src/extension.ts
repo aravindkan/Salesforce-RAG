@@ -30,15 +30,16 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		let cacheStatus = '';
-		let chunks = loadIndexCache(context)?.chunks;
+		/*let chunks = loadIndexCache(context)?.chunks;
 		if (!chunks) {
 			const docs = await scanSalesforceProject();
 			chunks = chunkApexDocuments(docs);
 			await saveIndexCache(context, chunks);
-		}
-
-
+		}*/
+		const docs = await scanSalesforceProject();
+		const chunks = chunkApexDocuments(docs);
 		buildIndex(chunks);
+
 		const question = await vscode.window.showInputBox({
     		prompt: "Ask a Salesforce question"
 		});
@@ -69,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let matches = semanticMatches.map(match => match.chunk);
 
-		// Keep keyword search as a fallback.
+		// implement true hybrid ranking that combines lexical and semantic scores.
 		if (matches.length === 0) {
 			const keywords = extractKeywords(question);
 			matches = searchIndex(keywords.join(' '), 5);
