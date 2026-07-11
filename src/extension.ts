@@ -8,7 +8,6 @@ import { extractKeywords } from "./questionParser";
 import { buildAnswer } from './answerBuilder';
 import { buildPrompt } from './promptBuilder';
 import { askLLM, getLLMProvider } from './llmClient';
-import { loadIndexCache, saveIndexCache } from './indexCache';
 import { buildEmbeddings } from './embeddingService';
 import { semanticSearch } from './semanticSearch';
 
@@ -29,13 +28,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const disposable = vscode.commands.registerCommand('salesforce-rag-agent-v2.helloWorld', async () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		let cacheStatus = '';
-		/*let chunks = loadIndexCache(context)?.chunks;
-		if (!chunks) {
-			const docs = await scanSalesforceProject();
-			chunks = chunkApexDocuments(docs);
-			await saveIndexCache(context, chunks);
-		}*/
 		const docs = await scanSalesforceProject();
 		const chunks = chunkApexDocuments(docs);
 		buildIndex(chunks);
@@ -70,7 +62,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let matches = semanticMatches.map(match => match.chunk);
 
-		// implement true hybrid ranking that combines lexical and semantic scores.
 		if (matches.length === 0) {
 			const keywords = extractKeywords(question);
 			matches = searchIndex(keywords.join(' '), 5);
