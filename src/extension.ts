@@ -8,7 +8,8 @@ import { extractKeywords } from "./questionParser";
 import { buildAnswer } from './answerBuilder';
 import { buildPrompt } from './promptBuilder';
 import { askLLM, getLLMProvider } from './llmClient';
-import { loadIndexCache, saveIndexCache } from './indexCache';
+import { buildEmbeddings } from './embeddingService';
+import { semanticSearch } from './semanticSearch';
 
 
 // This method is called when your extension is activated
@@ -27,24 +28,44 @@ export function activate(context: vscode.ExtensionContext) {
 	const disposable = vscode.commands.registerCommand('salesforce-rag-agent-v2.helloWorld', async () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		let cacheStatus = '';
-		let chunks = loadIndexCache(context)?.chunks;
-		if (!chunks) {
-			const docs = await scanSalesforceProject();
-			chunks = chunkApexDocuments(docs);
-			await saveIndexCache(context, chunks);
-		}
-
-
+		const docs = await scanSalesforceProject();
+		const chunks = chunkApexDocuments(docs);
 		buildIndex(chunks);
+
 		const question = await vscode.window.showInputBox({
     		prompt: "Ask a Salesforce question"
 		});
 		if (!question) {
     		return;
 		}
-		const keywords = extractKeywords(question);
-		const matches = searchIndex(keywords.join(" "), 5);
+		output.clear();
+		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine('Preparing semantic index...');
+		output.show();
+
+		const embeddingResult = await buildEmbeddings(context, chunks);
+
+		output.appendLine(
+		`Embeddings: ${embeddingResult.cachedCount} cached, ` +
+		`${embeddingResult.generatedCount} generated.`
+		);
+		output.appendLine('');
+		output.appendLine('Searching semantically...');
+		output.show();
+
+		const semanticMatches = await semanticSearch(
+		question,
+		embeddingResult.embeddedChunks,
+		5
+		);
+
+		let matches = semanticMatches.map(match => match.chunk);
+
+		if (matches.length === 0) {
+			const keywords = extractKeywords(question);
+			matches = searchIndex(keywords.join(' '), 5);
+		}
 		const answer = buildAnswer(question, matches);
 		const prompt = buildPrompt(question, matches);
 
@@ -53,11 +74,30 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine('');
 		output.appendLine('Thinking...');
 		output.show();
+		output.appendLine('');
+		output.appendLine('Semantic matches:');
+		for (const match of semanticMatches) {
+			output.appendLine(
+				`• ${match.chunk.name} — score ${match.score.toFixed(4)}`
+			);
+		}
+		output.appendLine('');
+		output.appendLine('Generating AI answer...');
+		output.show();
 		const response = await askLLM(prompt);
 		output.clear();
 		output.appendLine(`Question: ${question}`);
 		output.appendLine('');
 		output.appendLine(`Provider: ${getLLMProvider()}`);
+		output.appendLine('');
+		output.appendLine(`Embeddings: ${embeddingResult.cachedCount} cached, ` +
+  			`${embeddingResult.generatedCount} generated`);
+		output.appendLine('Semantic matches:');
+		for (const match of semanticMatches) {
+			output.appendLine(
+				`• ${match.chunk.name} — ${match.score.toFixed(4)}`
+			);
+		}	
 		output.appendLine('');
 		output.appendLine('AI Answer:');
 		output.appendLine(response);
