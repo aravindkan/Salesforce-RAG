@@ -15,4 +15,4 @@ Build an AI Engineering Copilot that assists Salesforce developers throughout th
 - TDD generation
 - n8n automation
 - Agentic workflows
-- IEEE publication
+- IEEE-format research paper and peer-reviewed publication submission
