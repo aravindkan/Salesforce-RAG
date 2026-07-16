@@ -12,7 +12,7 @@ Build an AI Engineering Copilot that assists Salesforce developers throughout th
 ## Long-Term Goals
 - AI code generation
 - AI code review
-- TDD generation
+- Technical Design Document generation
 - n8n automation
 - Agentic workflows
 - IEEE-format research paper and peer-reviewed publication submission
