@@ -28,24 +28,37 @@ function scoreChunk(chunk: ApexChunk, words: string[]): number {
   let score = 0;
 
   const name = chunk.name.toLowerCase();
+  const parentName = chunk.parentName?.toLowerCase() ?? '';
+  const signature = chunk.signature?.toLowerCase() ?? '';
   const fileName = chunk.fileName.toLowerCase();
   const content = chunk.content.toLowerCase();
 
   for (const word of words) {
-    if (name.includes(word)){
-        score += 10;
+    if (name.includes(word)) {
+      score += 10;
     }
+
+    if (parentName.includes(word)) {
+      score += 8;
+    }
+
+    if (signature.includes(word)) {
+      score += 6;
+    }
+
     if (fileName.includes(word)) {
-        score += 5;
+      score += 5;
     }
+
     if (content.includes(word)) {
-        score += 2;
+      score += 2;
     }
   }
 
   if (chunk.chunkType === 'method') {
-     score += 3;
+    score += 3;
   }
+
   if (chunk.chunkType === 'trigger') {
     score += 2;
   }
