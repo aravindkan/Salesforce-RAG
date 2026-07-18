@@ -5,7 +5,7 @@ import { scanSalesforceProject } from './salesforceScanner';
 import { chunkApexDocuments } from './apexChunker';
 import { buildIndex, searchIndex } from './ragIndex';
 import { extractKeywords } from "./questionParser";
-import { buildPrompt } from './promptBuilder';
+import { buildIntentPrompt } from './prompts/promptFactory';
 import { askLLM, getLLMProvider } from './llmClient';
 import { buildEmbeddings } from './embeddingService';
 import { semanticSearch } from './semanticSearch';
@@ -74,7 +74,20 @@ export function activate(context: vscode.ExtensionContext) {
 			const keywords = extractKeywords(question);
 			matches = searchIndex(keywords.join(' '), 5);
 		}
-		const prompt = buildPrompt(question, matches);
+		const retrievedContext = matches
+		.map(match => {
+			return [
+				`Source: ${match.name}`,
+				`Type: ${match.chunkType}`,
+				`File: ${match.fileName}`,
+				match.content
+			].join('\n');
+		})
+		.join('\n\n---\n\n');
+		const prompt = buildIntentPrompt(intentResult.intent, {
+			question,
+			retrievedContext
+		});
 
 		output.clear();
 		output.appendLine(`Question: ${question}`);
