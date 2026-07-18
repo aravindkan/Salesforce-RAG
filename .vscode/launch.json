@@ -7,7 +7,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "/Users/aravindkannan/VSCodeOrgs/NA156DevOrg"
+         "${workspaceFolder}/.."
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"

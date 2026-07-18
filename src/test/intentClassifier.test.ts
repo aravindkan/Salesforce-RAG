@@ -27,5 +27,12 @@ suite("Intent Classifier", () => {
 
         assert.strictEqual(result.intent, 'explain');
         assert.ok(result.matchedSignals.includes('tell me about'));
-    }); 
+    });
+    test("classifies an unsupported question as unknown", () => {
+        const result = classifyIntent("ContactHelper");
+
+        assert.strictEqual(result.intent, "unknown");
+        assert.strictEqual(result.confidence, 0);
+        assert.deepStrictEqual(result.matchedSignals, []);
+    });
 });

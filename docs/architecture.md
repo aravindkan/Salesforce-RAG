@@ -1,11 +1,13 @@
 # Architecture
 
 ## Current
-Scanner → Chunker → Embeddings → Vector Index → Retriever → Prompt Builder → LLM → VS Code
-Intent Classifier
-Prompt Factory
-Prompt Templates
-Search and Explain flows
+User Question
+→ Intent Classifier
+→ Semantic Retriever
+→ Prompt Factory
+→ Search or Explain Prompt
+→ LLM
+→ VS Code Output
 
 
 ## Future
