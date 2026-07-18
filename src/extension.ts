@@ -3,13 +3,14 @@
 import * as vscode from 'vscode';
 import { scanSalesforceProject } from './salesforceScanner';
 import { chunkApexDocuments } from './apexChunker';
-import { buildIndex, getIndex, searchIndex } from './ragIndex';
+import { buildIndex, searchIndex } from './ragIndex';
 import { extractKeywords } from "./questionParser";
-import { buildAnswer } from './answerBuilder';
 import { buildPrompt } from './promptBuilder';
 import { askLLM, getLLMProvider } from './llmClient';
 import { buildEmbeddings } from './embeddingService';
 import { semanticSearch } from './semanticSearch';
+import { classifyIntent } from './intents/intentClassifier';
+
 
 
 // This method is called when your extension is activated
@@ -38,8 +39,15 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!question) {
     		return;
 		}
+		const intentResult = classifyIntent(question);
 		output.clear();
 		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine(`Intent: ${intentResult.intent}`);
+		output.appendLine(`Intent confidence: ${intentResult.confidence.toFixed(2)}`);
+		output.appendLine(
+    		`Matched signals: ${intentResult.matchedSignals.join(', ') || 'none'}`
+		);
 		output.appendLine('');
 		output.appendLine('Preparing semantic index...');
 		output.show();
@@ -66,11 +74,16 @@ export function activate(context: vscode.ExtensionContext) {
 			const keywords = extractKeywords(question);
 			matches = searchIndex(keywords.join(' '), 5);
 		}
-		const answer = buildAnswer(question, matches);
 		const prompt = buildPrompt(question, matches);
 
 		output.clear();
 		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine(`Intent: ${intentResult.intent}`);
+		output.appendLine(`Intent confidence: ${intentResult.confidence.toFixed(2)}`);
+		output.appendLine(
+    		`Matched signals: ${intentResult.matchedSignals.join(', ') || 'none'}`
+		);
 		output.appendLine('');
 		output.appendLine('Thinking...');
 		output.show();
@@ -87,6 +100,12 @@ export function activate(context: vscode.ExtensionContext) {
 		const response = await askLLM(prompt);
 		output.clear();
 		output.appendLine(`Question: ${question}`);
+		output.appendLine('');
+		output.appendLine(`Intent: ${intentResult.intent}`);
+		output.appendLine(`Intent confidence: ${intentResult.confidence.toFixed(2)}`);
+		output.appendLine(
+    		`Matched signals: ${intentResult.matchedSignals.join(', ') || 'none'}`
+		);
 		output.appendLine('');
 		output.appendLine(`Provider: ${getLLMProvider()}`);
 		output.appendLine('');

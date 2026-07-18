@@ -13,6 +13,7 @@ const SEARCH_SIGNALS = [
 
 const EXPLAIN_SIGNALS = [
     "explain",
+    "tell me about",
     "how does",
     "how is",
     "what does",

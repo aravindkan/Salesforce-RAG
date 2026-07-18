@@ -22,13 +22,10 @@ suite("Intent Classifier", () => {
         assert.ok(result.matchedSignals.includes("explain"));
     });
 
-    test("classifies an unsupported question as unknown", () => {
-        const result = classifyIntent(
-            "Tell me about this code"
-        );
+    test('classifies "tell me about" as explain', () => {
+        const result = classifyIntent('Tell me about ContactHelper');
 
-        assert.strictEqual(result.intent, "unknown");
-        assert.strictEqual(result.confidence, 0);
-        assert.deepStrictEqual(result.matchedSignals, []);
-    });
+        assert.strictEqual(result.intent, 'explain');
+        assert.ok(result.matchedSignals.includes('tell me about'));
+    }); 
 });
