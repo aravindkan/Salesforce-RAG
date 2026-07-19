@@ -104,8 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine('Thinking...');
 		output.show();
 		output.appendLine('');
-		//output.appendLine('Semantic matches:');
-		output.appendLine("Retrieved matches:");
+		output.appendLine('Semantic matches:');
 		for (const match of semanticMatches) {
 			output.appendLine(
 				`• ${match.chunk.name} — score ${match.score.toFixed(4)}`
