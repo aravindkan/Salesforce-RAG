@@ -138,7 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
 			`• Source files: ${assembledContext.sourceFiles.join(", ") || "None"}`
 		);
 		output.appendLine("");
-		output.appendLine("Retrieved matches:");
+		output.appendLine("Semantic matches:");
 		for (const match of semanticMatches) {
 			output.appendLine(
 				`• ${match.chunk.name} — ${match.score.toFixed(4)}`
@@ -148,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine('AI Answer:');
 		output.appendLine(response);
 		output.appendLine('');
-		output.appendLine('Sources:');
+		output.appendLine("Context sources:");
 		for (const match of matches) {
 			output.appendLine(`• ${match.name} (${match.chunkType}) - ${match.fileName}`);
 		}
