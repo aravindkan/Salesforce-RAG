@@ -10,6 +10,7 @@ import { askLLM, getLLMProvider } from './llmClient';
 import { buildEmbeddings } from './embeddingService';
 import { semanticSearch } from './semanticSearch';
 import { classifyIntent } from './intents/intentClassifier';
+import { assembleContext } from "./retrieval/contextAssembler";
 
 
 
@@ -74,16 +75,10 @@ export function activate(context: vscode.ExtensionContext) {
 			const keywords = extractKeywords(question);
 			matches = searchIndex(keywords.join(' '), 5);
 		}
-		const retrievedContext = matches
-		.map(match => {
-			return [
-				`Source: ${match.name}`,
-				`Type: ${match.chunkType}`,
-				`File: ${match.fileName}`,
-				match.content
-			].join('\n');
-		})
-		.join('\n\n---\n\n');
+		const assembledContext = assembleContext(matches, {
+    		includeScores: false
+		});
+		const retrievedContext = assembledContext.context;
 		const prompt = buildIntentPrompt(intentResult.intent, {
 			question,
 			retrievedContext
@@ -97,11 +92,20 @@ export function activate(context: vscode.ExtensionContext) {
 		output.appendLine(
     		`Matched signals: ${intentResult.matchedSignals.join(', ') || 'none'}`
 		);
+		output.appendLine("");
+		output.appendLine("Context Assembly:");
+		output.appendLine(
+    		`• Chunks included: ${assembledContext.chunkCount}`
+		);
+		output.appendLine(
+			`• Source files: ${assembledContext.sourceFiles.join(", ") || "None"}`
+		);
 		output.appendLine('');
 		output.appendLine('Thinking...');
 		output.show();
 		output.appendLine('');
-		output.appendLine('Semantic matches:');
+		//output.appendLine('Semantic matches:');
+		output.appendLine("Retrieved matches:");
 		for (const match of semanticMatches) {
 			output.appendLine(
 				`• ${match.chunk.name} — score ${match.score.toFixed(4)}`
@@ -121,10 +125,20 @@ export function activate(context: vscode.ExtensionContext) {
 		);
 		output.appendLine('');
 		output.appendLine(`Provider: ${getLLMProvider()}`);
-		output.appendLine('');
-		output.appendLine(`Embeddings: ${embeddingResult.cachedCount} cached, ` +
-  			`${embeddingResult.generatedCount} generated`);
-		output.appendLine('Semantic matches:');
+		output.appendLine(
+			`Embeddings: ${embeddingResult.cachedCount} cached, ` +
+			`${embeddingResult.generatedCount} generated`
+		);
+		output.appendLine("");
+		output.appendLine("Context Assembly:");
+		output.appendLine(
+			`• Chunks included: ${assembledContext.chunkCount}`
+		);
+		output.appendLine(
+			`• Source files: ${assembledContext.sourceFiles.join(", ") || "None"}`
+		);
+		output.appendLine("");
+		output.appendLine("Retrieved matches:");
 		for (const match of semanticMatches) {
 			output.appendLine(
 				`• ${match.chunk.name} — ${match.score.toFixed(4)}`
