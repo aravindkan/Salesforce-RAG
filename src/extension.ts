@@ -11,6 +11,7 @@ import { buildEmbeddings } from './embeddingService';
 import { semanticSearch } from './semanticSearch';
 import { classifyIntent } from './intents/intentClassifier';
 import { assembleContext } from "./retrieval/contextAssembler";
+import { hybridSearch } from './hybridSearch';
 
 
 
@@ -64,12 +65,19 @@ export function activate(context: vscode.ExtensionContext) {
 		output.show();
 
 		const semanticMatches = await semanticSearch(
-		question,
-		embeddingResult.embeddedChunks,
-		5
+			question,
+			embeddingResult.embeddedChunks,
+			10
 		);
 
-		let matches = semanticMatches.map(match => match.chunk);
+		const hybridMatches = hybridSearch(
+  			question,
+  			semanticMatches,
+  			5
+		);
+
+
+		let matches = hybridMatches.map(match => match.chunk);
 
 		if (matches.length === 0) {
 			const keywords = extractKeywords(question);
@@ -111,6 +119,16 @@ export function activate(context: vscode.ExtensionContext) {
 			);
 		}
 		output.appendLine('');
+		output.appendLine('Hybrid matches:');
+		for (const match of hybridMatches) {
+			output.appendLine(
+				`• ${match.chunk.name}` +
+				` | semantic=${match.semanticScore.toFixed(4)}` +
+				` | keyword=${match.keywordScore}` +
+				` | hybrid=${match.hybridScore.toFixed(4)}`
+			);
+		}
+		output.appendLine('');
 		output.appendLine('Generating AI answer...');
 		output.show();
 		const response = await askLLM(prompt);
@@ -141,6 +159,16 @@ export function activate(context: vscode.ExtensionContext) {
 		for (const match of semanticMatches) {
 			output.appendLine(
 				`• ${match.chunk.name} — ${match.score.toFixed(4)}`
+			);
+		}
+		output.appendLine('');
+		output.appendLine('Hybrid matches:');
+		for (const match of hybridMatches) {
+			output.appendLine(
+				`• ${match.chunk.name}` +
+				` | semantic=${match.semanticScore.toFixed(4)}` +
+				` | keyword=${match.keywordScore}` +
+				` | hybrid=${match.hybridScore.toFixed(4)}`
 			);
 		}	
 		output.appendLine('');

@@ -2,6 +2,11 @@ import { ApexChunk } from './apexChunker';
 
 let index: ApexChunk[] = [];
 
+export interface KeywordMatch {
+  chunk: ApexChunk;
+  score: number;
+}
+
 export function buildIndex(chunks: ApexChunk[]): void {
   index = chunks;
 }
@@ -10,8 +15,42 @@ export function getIndex(): ApexChunk[] {
   return index;
 }
 
-export function searchIndex(query: string, limit = 5): ApexChunk[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+export function searchIndexWithScores(
+  query: string,
+  limit = 10
+): KeywordMatch[] {
+  const stopWords = new Set([
+  'a',
+  'an',
+  'the',
+  'is',
+  'are',
+  'was',
+  'were',
+  'where',
+  'which',
+  'what',
+  'who',
+  'how',
+  'to',
+  'of',
+  'in',
+  'on',
+  'for',
+  'from',
+  'with',
+  'its',
+  'this',
+  'that'
+]);
+
+const words = query
+  .toLowerCase()
+  .split(/\W+/)
+  .filter(word =>
+    word.length > 1 &&
+    !stopWords.has(word)
+  );
 
   return index
     .map(chunk => ({
@@ -20,11 +59,22 @@ export function searchIndex(query: string, limit = 5): ApexChunk[] {
     }))
     .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
+    .slice(0, limit);
+}
+
+// Keep this so existing code does not break.
+export function searchIndex(
+  query: string,
+  limit = 5
+): ApexChunk[] {
+  return searchIndexWithScores(query, limit)
     .map(item => item.chunk);
 }
 
-function scoreChunk(chunk: ApexChunk, words: string[]): number {
+function scoreChunk(
+  chunk: ApexChunk,
+  words: string[]
+): number {
   let score = 0;
 
   const name = chunk.name.toLowerCase();
