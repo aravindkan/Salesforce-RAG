@@ -19,15 +19,10 @@ export async function getApiKey(
   const storage = getSecretStorage();
 
   if (provider === 'openai') {
-    // SecretStorage first, environment variable temporarily as fallback.
-    return (
-      await storage.get(OPENAI_SECRET_KEY)
-    ) ?? process.env.OPENAI_API_KEY;
+    return storage.get(OPENAI_SECRET_KEY);
   }
 
-  return (
-    await storage.get(ANTHROPIC_SECRET_KEY)
-  ) ?? process.env.ANTHROPIC_API_KEY;
+  return storage.get(ANTHROPIC_SECRET_KEY);
 }
 
 export async function saveApiKey(
