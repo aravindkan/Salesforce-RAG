@@ -7,22 +7,11 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-         "${workspaceFolder}/.."
+        "${workspaceFolder}/.."
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
-      ],
-      "env": {
-        "OPENAI_API_KEY": "${input:openaiApiKey}"
-      }
-    }
-  ],
-  "inputs": [
-    {
-      "id": "openaiApiKey",
-      "type": "promptString",
-      "description": "Enter your OpenAI API key",
-      "password": true
+      ]
     }
   ]
 }

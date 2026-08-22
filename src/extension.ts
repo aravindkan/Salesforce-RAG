@@ -12,12 +12,86 @@ import { semanticSearch } from './semanticSearch';
 import { classifyIntent } from './intents/intentClassifier';
 import { assembleContext } from "./retrieval/contextAssembler";
 import { hybridSearch } from './hybridSearch';
+import { initializeCredentialManager,saveApiKey, deleteApiKey } from './credentialManager';
 
 
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	initializeCredentialManager(context);
+	const setOpenAIKey = vscode.commands.registerCommand(
+  		'salesforce-rag-agent-v2.setOpenAIKey',
+  	async () => {
+    const apiKey = await vscode.window.showInputBox({
+      prompt: 'Enter your OpenAI API key',
+      password: true,
+      ignoreFocusOut: true
+    });
+
+    if (!apiKey) {
+      return;
+    }
+
+    await saveApiKey('openai', apiKey);
+
+    vscode.window.showInformationMessage(
+      'OpenAI API key stored securely.'
+    );
+  }
+);
+
+const setClaudeKey = vscode.commands.registerCommand(
+  'salesforce-rag-agent-v2.setClaudeKey',
+  async () => {
+    const apiKey = await vscode.window.showInputBox({
+      prompt: 'Enter your Anthropic API key',
+      password: true,
+      ignoreFocusOut: true
+    });
+
+    if (!apiKey) {
+      return;
+    }
+
+    await saveApiKey('claude', apiKey);
+
+    vscode.window.showInformationMessage(
+      'Anthropic API key stored securely.'
+    );
+  }
+);
+
+const deleteKey = vscode.commands.registerCommand(
+  'salesforce-rag-agent-v2.deleteApiKey',
+  async () => {
+    const provider = await vscode.window.showQuickPick(
+      [
+        { label: 'OpenAI', value: 'openai' as const },
+        { label: 'Claude', value: 'claude' as const }
+      ],
+      {
+        placeHolder: 'Choose which API key to delete'
+      }
+    );
+
+    if (!provider) {
+      return;
+    }
+
+    await deleteApiKey(provider.value);
+
+    vscode.window.showInformationMessage(
+      `${provider.label} API key deleted.`
+    );
+  }
+);
+
+context.subscriptions.push(
+  setOpenAIKey,
+  setClaudeKey,
+  deleteKey
+);
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated

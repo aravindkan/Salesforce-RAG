@@ -1,16 +1,19 @@
+import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { getApiKey } from './credentialManager';
 
 type LLMProvider = 'openai' | 'claude';
 
-const provider: LLMProvider =
-  (process.env.SF_RAG_LLM_PROVIDER as LLMProvider) || 'openai';
-
-export function getLLMProvider(): string {
-  return provider;
+export function getLLMProvider(): LLMProvider {
+  return vscode.workspace
+    .getConfiguration('salesforceRag')
+    .get<LLMProvider>('llmProvider', 'openai');
 }
 
 export async function askLLM(prompt: string): Promise<string> {
+  const provider = getLLMProvider();
+
   if (provider === 'claude') {
     return askClaude(prompt);
   }
@@ -19,12 +22,16 @@ export async function askLLM(prompt: string): Promise<string> {
 }
 
 async function askOpenAI(prompt: string): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    return 'Missing OPENAI_API_KEY environment variable.';
+  const apiKey = await getApiKey('openai');
+
+  if (!apiKey) {
+    throw new Error(
+      'OpenAI API key is not configured. Set it in Salesforce RAG settings.'
+    );
   }
 
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey
   });
 
   const response = await openai.responses.create({
@@ -36,18 +43,27 @@ async function askOpenAI(prompt: string): Promise<string> {
 }
 
 async function askClaude(prompt: string): Promise<string> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return 'Missing ANTHROPIC_API_KEY environment variable.';
+  const apiKey = await getApiKey('claude');
+
+  if (!apiKey) {
+    throw new Error(
+      'Anthropic API key is not configured. Set it in Salesforce RAG settings.'
+    );
   }
 
   const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY
+    apiKey
   });
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-5-20250929',
     max_tokens: 1000,
-    messages: [{ role: 'user', content: prompt }]
+    messages: [
+      {
+        role: 'user',
+        content: prompt
+      }
+    ]
   });
 
   return message.content

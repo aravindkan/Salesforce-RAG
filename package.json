@@ -14,13 +14,43 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "salesforce-rag-agent-v2.helloWorld",
-        "title": "Salesforce RAG v2: Test"
+  "commands": [
+    {
+      "command": "salesforce-rag-agent-v2.helloWorld",
+      "title": "Salesforce RAG v2: Test"
+    },
+    {
+      "command": "salesforce-rag-agent-v2.setOpenAIKey",
+      "title": "Salesforce RAG: Set OpenAI API Key"
+    },
+    {
+      "command": "salesforce-rag-agent-v2.setClaudeKey",
+      "title": "Salesforce RAG: Set Claude API Key"
+    },
+    {
+      "command": "salesforce-rag-agent-v2.deleteApiKey",
+      "title": "Salesforce RAG: Delete API Key"
+    }
+  ],
+  "configuration": {
+    "title": "Salesforce RAG",
+    "properties": {
+      "salesforceRag.llmProvider": {
+        "type": "string",
+        "enum": [
+          "openai",
+          "claude"
+        ],
+        "enumDescriptions": [
+          "Use OpenAI for generated answers",
+          "Use Claude for generated answers"
+        ],
+        "default": "openai",
+        "description": "Select the LLM provider used for Salesforce RAG answers."
       }
-    ]
-  },
+    }
+  }
+},
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "npm run check-types && npm run lint && node esbuild.js",

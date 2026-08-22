@@ -1,12 +1,12 @@
 import OpenAI from 'openai';
-
+import { getApiKey } from './credentialManager';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 
 export async function createEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = await getApiKey('openai');
 
   if (!apiKey) {
-    throw new Error('Missing OPENAI_API_KEY environment variable.');
+    throw new Error('OpenAI API key is not configured. Set it in Salesforce RAG settings.');
   }
 
   const openai = new OpenAI({ apiKey });
@@ -39,10 +39,10 @@ export async function createEmbeddings(
     return [];
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = await getApiKey('openai');
 
   if (!apiKey) {
-    throw new Error('Missing OPENAI_API_KEY environment variable.');
+    throw new Error('OpenAI API key is not configured. Set it in Salesforce RAG settings.');
   }
 
   const normalizedTexts = texts.map(text => text.replace(/\s+/g, ' ').trim());
